@@ -127,3 +127,17 @@ export async function updateEpisodeStatus(episodeId: string, newStatus: string) 
   revalidatePath(`/episodes/${episodeId}`)
   return { success: true }
 }
+
+export async function removePad(episodeId: string, usageId: string) {
+  const supabase = await createClient()
+  await supabase.from('sound_usages').delete().eq('id', usageId)
+  revalidatePath(`/episodes/${episodeId}`)
+  return { success: true }
+}
+
+export async function removeDrone(episodeId: string, usageId: string) {
+  const supabase = await createClient()
+  await supabase.from('ambient_usages').delete().eq('id', usageId)
+  revalidatePath(`/episodes/${episodeId}`)
+  return { success: true }
+}
