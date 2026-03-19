@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, X, Zap } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { UploadDialog } from './upload-dialog'
 
 const MOODS = [
   { label: 'Oscuro', emoji: '🖤', value: 'oscuro' },

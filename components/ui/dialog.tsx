@@ -11,7 +11,12 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
+import { Slot } from "@radix-ui/react-slot"
+
+function DialogTrigger({ asChild, ...props }: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
+  if (asChild) {
+    return <DialogPrimitive.Trigger data-slot="dialog-trigger" render={<Slot />} {...props} />
+  }
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 

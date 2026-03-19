@@ -115,7 +115,7 @@ export function UploadDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold text-zinc-500 uppercase">Categoría</Label>
-              <Select value={categoria} onValueChange={setCategoria}>
+              <Select value={categoria} onValueChange={(val) => setCategoria(val as string)}>
                 <SelectTrigger className="bg-zinc-900 border-zinc-800">
                   <SelectValue />
                 </SelectTrigger>
@@ -129,7 +129,7 @@ export function UploadDialog() {
             
             <div className="space-y-2">
               <Label className="text-[10px] font-bold text-zinc-500 uppercase">Mood</Label>
-              <Select value={mood} onValueChange={setMood}>
+              <Select value={mood} onValueChange={(val) => setMood(val as string)}>
                 <SelectTrigger className="bg-zinc-900 border-zinc-800">
                   <SelectValue />
                 </SelectTrigger>
@@ -151,7 +151,7 @@ export function UploadDialog() {
             </div>
             <Slider 
               value={[energia]} 
-              onValueChange={(val) => setEnergia(val[0])} 
+              onValueChange={(val) => setEnergia(Array.isArray(val) ? val[0] : val)} 
               max={10} 
               min={1} 
               step={1}
