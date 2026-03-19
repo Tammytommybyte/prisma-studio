@@ -94,3 +94,36 @@ export async function assignDrone(
   revalidatePath(`/episodes/${episodeId}`)
   return { success: true }
 }
+
+export async function assignPad(
+  episodeId: string,
+  segmentId: string,
+  soundAssetId: string,
+  volumen: number = 80,
+  triggerLabel: string = 'FX'
+) {
+  const supabase = await createClient()
+
+  // REGLA: Por ahora no tenemos limite de pads por segmento, 
+  // pero solo permitimos uno del mismo asset por segmento (UNIQUE constraint en BD).
+  
+  const { error } = await supabase.from('sound_usages').upsert({
+    segment_id: segmentId,
+    sound_asset_id: soundAssetId,
+    volumen: volumen,
+    trigger_label: triggerLabel
+  }, { onConflict: 'segment_id, sound_asset_id' })
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/episodes/${episodeId}`)
+  return { success: true }
+}
+
+export async function updateEpisodeStatus(episodeId: string, newStatus: string) {
+  const supabase = await createClient()
+  await supabase.from('episodes').update({ estado: newStatus }).eq('id', episodeId)
+  revalidatePath('/pipeline')
+  revalidatePath(`/episodes/${episodeId}`)
+  return { success: true }
+}

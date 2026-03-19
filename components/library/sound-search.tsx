@@ -44,35 +44,29 @@ export function SoundSearch({ onSearch }: { onSearch: (filters: any) => void }) 
 
   return (
     <div className="space-y-4 mb-8 bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800 shadow-xl backdrop-blur-sm">
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <Input 
-            placeholder="Buscar por nombre o etiquetas..." 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 bg-zinc-950 border-zinc-800 text-zinc-200 focus-visible:ring-indigo-500 rounded-xl py-6"
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          />
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5 group-focus-within:text-rose-500 transition-colors" />
+            <Input 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, etiqueta o mood..."
+              className="bg-zinc-950 border-zinc-900 pl-12 h-14 rounded-2xl focus:ring-rose-500/20 focus:border-rose-500/50 transition-all text-lg placeholder:text-zinc-700"
+            />
+          </div>
+          <UploadDialog />
+          <Button 
+            variant="outline" 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "h-14 px-6 rounded-2xl border-zinc-900 flex items-center gap-2 font-bold transition-all",
+              showFilters ? "bg-rose-500/10 border-rose-500/30 text-rose-500" : "bg-zinc-950 text-zinc-400 hover:text-white"
+            )}
+          >
+            <SlidersHorizontal className="w-5 h-5" /> 
+            <span className="hidden sm:inline">Filtros Avanzados</span>
+          </Button>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => setShowFilters(!showFilters)}
-          className={cn(
-             "border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white rounded-xl px-6 h-auto py-3 transition-all",
-             showFilters && "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
-          )}
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filtros
-        </Button>
-        <Button 
-          onClick={handleSearch}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-8 shadow-lg shadow-indigo-900/20"
-        >
-          Explorar
-        </Button>
-      </div>
 
       {showFilters && (
         <div className="pt-4 border-t border-zinc-800/50 grid grid-cols-1 md:grid-cols-3 gap-8 animate-in slide-in-from-top-2 duration-300">

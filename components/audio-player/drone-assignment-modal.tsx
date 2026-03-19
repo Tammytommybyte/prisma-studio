@@ -1,166 +1,186 @@
 'use client'
 
 import { useState } from 'react'
-import { assignDrone } from '@/app/episodes/[id]/actions'
+import { assignDrone, assignPad, removePad } from '@/app/episodes/[id]/actions'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
-import { Waves, PlayCircle, Settings2, ShieldAlert } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from '@/components/ui/input'
+import { Waves, PlayCircle, Settings2, ShieldAlert, Zap, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function DroneAssignmentModal({ 
+export function SoundAssignmentModal({ 
   episodeId, 
   segment, 
-  layers 
+  layers,
+  assets
 }: { 
   episodeId: string, 
   segment: any, 
-  layers: any[] 
+  layers: any[],
+  assets: any[]
 }) {
   const [open, setOpen] = useState(false)
-  const currentUsage = segment.ambient_usages?.[0]
+  const ambientUsage = segment.ambient_usages?.[0]
+  const padUsages = segment.sound_usages || []
   
-  const [selectedLayer, setSelectedLayer] = useState<string | null>(currentUsage?.ambient_layer_id || null)
-  const [volume, setVolume] = useState(currentUsage?.volumen || 15)
-  const [loop, setLoop] = useState(currentUsage?.loop ?? true)
-  const [mood, setMood] = useState(currentUsage?.notes || '')
+  // Ambient State
+  const [selectedLayer, setSelectedLayer] = useState<string | null>(ambientUsage?.ambient_layer_id || null)
+  const [volume, setVolume] = useState(ambientUsage?.volumen || 15)
+  const [loop, setLoop] = useState(ambientUsage?.loop ?? true)
+  
+  // Pad State
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null)
+  const [padLabel, setPadLabel] = useState('')
   
   const [errorStatus, setErrorStatus] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = async () => {
+  const handleSaveAmbient = async () => {
     if (!selectedLayer) return
     setIsSaving(true)
-    setErrorStatus(null)
+    const res = await assignDrone(episodeId, segment.id, selectedLayer, volume, loop, '')
+    if (res?.error) setErrorStatus(res.error)
+    else setOpen(false)
+    setIsSaving(false)
+  }
 
-    const res = await assignDrone(episodeId, segment.id, selectedLayer, volume, loop, mood)
-    
-    if (res?.error) {
-      setErrorStatus(res.error)
-    } else {
-      setOpen(false)
+  const handleAddPad = async () => {
+    if (!selectedAsset) return
+    setIsSaving(true)
+    const res = await assignPad(episodeId, segment.id, selectedAsset, 80, padLabel || 'FX')
+    if (res?.error) setErrorStatus(res.error)
+    else {
+      setSelectedAsset(null)
+      setPadLabel('')
     }
     setIsSaving(false)
   }
 
+  const handleRemovePad = async (usageId: string) => {
+    await removePad(episodeId, usageId)
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {currentUsage ? (
-          <Button variant="outline" className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border-indigo-500/20 px-4 py-2 hover:bg-indigo-500/20 hover:text-indigo-300 rounded-lg text-sm font-semibold shadow-[0_0_10px_rgba(79,70,229,0.1)] transition-all">
-            <Waves className="w-4 h-4" />
-            <span>Editar Sonido</span>
-          </Button>
-        ) : (
-          <Button variant="outline" className="text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border-zinc-800/50 hover:border-indigo-500/30 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
-            <Waves className="w-4 h-4 mr-2" />
-            Asignar Pad / Drone
-          </Button>
-        )}
+      <DialogTrigger>
+        <div className="flex items-center gap-2 border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 rounded-xl px-4 py-2 transition-all cursor-pointer">
+          <Settings2 className="w-4 h-4" />
+          <span>Configurar Sonido</span>
+          {(ambientUsage || padUsages.length > 0) && (
+            <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse ml-1" />
+          )}
+        </div>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-zinc-100 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Waves className="w-5 h-5 text-indigo-400" />
-            Motor de Drones
-          </DialogTitle>
-          <DialogDescription className="text-zinc-400">
-            Escoge un drone para este segmento y ajusta el ambiente sonoro.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-900 text-zinc-100 shadow-3xl rounded-3xl">
+        <Tabs defaultValue="ambient" className="w-full">
+          <DialogHeader className="mb-4">
+            <div className="flex items-center justify-between pr-8">
+              <DialogTitle className="text-xl font-black uppercase tracking-tight">Diseño Sonoro</DialogTitle>
+              <TabsList className="bg-zinc-900 border-zinc-800">
+                <TabsTrigger value="ambient" className="data-[state=active]:bg-indigo-600">Ambient</TabsTrigger>
+                <TabsTrigger value="pads" className="data-[state=active]:bg-rose-600">Pads</TabsTrigger>
+              </TabsList>
+            </div>
+          </DialogHeader>
 
-        {errorStatus && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-lg flex items-start gap-3 mt-2 text-sm">
-            <ShieldAlert className="w-5 h-5 shrink-0" />
-            <p>{errorStatus}</p>
-          </div>
-        )}
-
-        <div className="mt-4 space-y-6">
-          {/* Sounds Selection */}
-          <div>
-            <h4 className="text-sm font-semibold text-zinc-300 mb-3 uppercase tracking-wider">Biblioteca Disponible</h4>
-            <ScrollArea className="h-40 rounded-md border border-zinc-800 bg-zinc-900/30 shadow-inner">
-              <div className="p-2 space-y-2">
+          <TabsContent value="ambient" className="space-y-6 animate-in fade-in duration-300 mt-0">
+            <ScrollArea className="h-64 rounded-2xl border border-zinc-900 bg-zinc-950/50 p-2">
+              <div className="space-y-1">
                 {layers.map((layer) => (
                   <button
                     key={layer.id}
                     onClick={() => setSelectedLayer(layer.id)}
                     className={cn(
-                      "w-full text-left px-3 py-2.5 rounded-md flex items-center justify-between transition-all",
+                      "w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all",
                       selectedLayer === layer.id 
-                        ? "bg-indigo-500/20 border-indigo-500/30 text-indigo-200 border shadow-[inset_0_1px_rgba(255,255,255,0.05)]" 
-                        : "hover:bg-zinc-800/80 text-zinc-400 border border-transparent"
+                        ? "bg-indigo-600/20 text-indigo-400 border border-indigo-600/30" 
+                        : "hover:bg-zinc-900 text-zinc-500 border border-transparent"
                     )}
                   >
-                    <div>
-                      <span className="block font-medium text-sm">{layer.nombre}</span>
-                      <span className="block text-[10px] opacity-70 mt-0.5">{layer.emocion || layer.tipo}</span>
+                    <div className="flex items-center gap-3">
+                      <Waves className={cn("w-4 h-4", selectedLayer === layer.id ? "text-indigo-400" : "text-zinc-600")} />
+                      <div>
+                        <span className="block font-bold text-sm">{layer.nombre}</span>
+                        <span className="block text-[10px] uppercase tracking-widest opacity-60 font-medium">{layer.emocion}</span>
+                      </div>
                     </div>
-                    {selectedLayer === layer.id && (
-                      <PlayCircle className="w-4 h-4 text-indigo-400" />
-                    )}
                   </button>
                 ))}
               </div>
             </ScrollArea>
-          </div>
+            
+            <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800/50 space-y-4">
+               <div className="flex justify-between items-center text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                 <span>Volumen Mezcla</span>
+                 <span className="text-indigo-400 font-mono">{volume}%</span>
+               </div>
+               <Slider value={[volume]} max={25} min={10} step={1} onValueChange={(v) => setVolume((v as number[])[0])} className="[&_[role=slider]]:bg-indigo-500" />
+               <div className="flex items-center justify-between">
+                 <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Loop Continuo</span>
+                 <Switch checked={loop} onCheckedChange={setLoop} className="data-[state=checked]:bg-indigo-500" />
+               </div>
+            </div>
 
-          {/* Controls */}
-          {selectedLayer && (
-            <div className="space-y-5 border-t border-zinc-800/60 pt-5">
-              <h4 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                <Settings2 className="w-4 h-4" /> Controles
-              </h4>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-400 font-medium">Mezcla (Volumen)</span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 font-mono text-zinc-300">{volume}%</span>
-                </div>
-                <Slider
-                  defaultValue={[volume]}
-                  max={25}
-                  min={10}
-                  step={1}
-                  onValueChange={(vals) => setVolume((vals as number[])[0])}
-                  className="[&_[role=slider]]:bg-indigo-400 [&_[role=slider]]:border-indigo-400"
-                />
-                <p className="text-[10px] text-zinc-500 leading-tight">
-                  Regla de oro: El volumen del pad no puede tapar la voz original (10% a 25% max).
-                </p>
-              </div>
+            <Button onClick={handleSaveAmbient} className="w-full bg-indigo-600 hover:bg-indigo-500 py-6 text-lg font-black uppercase rounded-2xl" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Fijar Ambiente'}
+            </Button>
+          </TabsContent>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium text-zinc-300">Reproducción Cíclica (Loop)</label>
-                  <p className="text-[10px] text-zinc-500">Mantener el drone activo durante todo el segmento.</p>
-                </div>
-                <Switch 
-                  checked={loop} 
-                  onCheckedChange={setLoop}
-                  className="data-[state=checked]:bg-indigo-500" 
-                />
+          <TabsContent value="pads" className="space-y-6 animate-in fade-in duration-300 mt-0">
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Pads Activos</h4>
+              <div className="flex flex-wrap gap-2 min-h-[40px]">
+                {padUsages.map((usage: any) => (
+                  <div key={usage.id} className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-full group">
+                    <Zap className="w-3 h-3 text-rose-500" />
+                    <span className="text-xs font-bold text-rose-200">{usage.trigger_label}</span>
+                    <button onClick={() => handleRemovePad(usage.id)} className="text-rose-500/40 hover:text-rose-500 transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {padUsages.length === 0 && <p className="text-xs text-zinc-600 italic py-2">No hay efectos disparables asignados.</p>}
               </div>
             </div>
-          )}
 
-          <div className="flex justify-end pt-2 gap-3">
-            <Button variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={!selectedLayer || isSaving}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white w-full sm:w-auto"
-            >
-              {isSaving ? 'Guardando...' : 'Aplicar Reglas y Guardar'}
-            </Button>
-          </div>
-        </div>
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Añadir Efecto (SFX)</h4>
+              <ScrollArea className="h-44 rounded-2xl border border-zinc-900 bg-zinc-950/50 p-2">
+                <div className="space-y-1">
+                  {assets.map((asset) => (
+                    <button
+                      key={asset.id}
+                      onClick={() => {
+                        setSelectedAsset(asset.id)
+                        setPadLabel(asset.nombre.split(' ')[0])
+                      }}
+                      className={cn(
+                        "w-full text-left px-4 py-2 rounded-xl flex items-center justify-between transition-all",
+                        selectedAsset === asset.id 
+                          ? "bg-rose-600/20 text-rose-400 border border-rose-600/30" 
+                          : "hover:bg-zinc-900 text-zinc-500 border border-transparent"
+                      )}
+                    >
+                      <span className="text-sm font-medium">{asset.nombre}</span>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+              
+              <div className="flex gap-2">
+                <Input value={padLabel} onChange={(e) => setPadLabel(e.target.value)} placeholder="Etiqueta del Pad (ej. Glitch)" className="bg-zinc-900 border-zinc-800" />
+                <Button onClick={handleAddPad} disabled={!selectedAsset || isSaving} className="bg-rose-600 hover:bg-rose-500 shrink-0">
+                  Añadir 
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

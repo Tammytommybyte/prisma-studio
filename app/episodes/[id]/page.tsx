@@ -17,16 +17,31 @@ export default async function EpisodeEditorPage({ params }: { params: Promise<{ 
     return notFound()
   }
 
-  // 2. Fetch Segments with Ambient Usages
+  // 2. Fetch Segments with Ambient Usages AND Sound Usages (Pads)
   const { data: segments } = await supabase
     .from('segments')
-    .select('*, ambient_usages(*, ambient_layers(*))')
+    .select(`
+      *,
+      ambient_usages (
+        id, ambient_layer_id, volumen, loop, notes,
+        ambient_layers (*)
+      ),
+      sound_usages (
+        id, sound_asset_id, volumen, trigger_label,
+        sound_assets (*)
+      )
+    `)
     .eq('episode_id', id)
     .order('orden', { ascending: true })
 
-  // 3. Fetch All Available Layers (for the modal)
+  // 3. Fetch All Available Layers & Assets (for the simplified sound picker)
   const { data: layers } = await supabase
     .from('ambient_layers')
+    .select('*')
+    .order('nombre', { ascending: true })
+    
+  const { data: assets } = await supabase
+    .from('sound_assets')
     .select('*')
     .order('nombre', { ascending: true })
 
@@ -36,6 +51,7 @@ export default async function EpisodeEditorPage({ params }: { params: Promise<{ 
         episode={episode} 
         initialSegments={segments || []} 
         layers={layers || []}
+        assets={assets || []}
       />
     </div>
   )
