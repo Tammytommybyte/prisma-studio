@@ -1,54 +1,41 @@
 import { NarrativeEditor } from './narrative-editor'
+import { createClient } from '@/utils/supabase/server'
+import { notFound } from 'next/navigation'
 
 export default async function EpisodeEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const supabase = await createClient()
 
-  // DATOS MOCK TEMPORALES (Sin Supabase) para previsualizar UI
-  const episode = {
-    id: id,
-    title: 'El Glitch Espiritual',
-    premise: '¿Por qué sentimos que nuestra mente va a más revoluciones que nuestro cuerpo? Exploramos la ansiedad hiperconectada.',
-    objetivo_emocional: 'Pasar de la tensión a la liberación'
+  // 1. Fetch Episode Details
+  const { data: episode, error: epError } = await supabase
+    .from('episodes')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (epError || !episode) {
+    return notFound()
   }
 
-  const segments = [
-    {
-      id: 'seg-1',
-      orden: 1,
-      nombre: 'Gancho: El Ruido Blanco',
-      tipo: 'Apertura',
-      intencion_emocional: 'Incomodidad / Tensión',
-      ambient_usages: []
-    },
-    {
-      id: 'seg-2',
-      orden: 2,
-      nombre: 'La Herida: 14 horas de pantalla',
-      tipo: 'Vulnerabilidad',
-      intencion_emocional: 'Empatía profunda',
-      ambient_usages: [{ ambient_layers: { id: 'l1', nombre: 'Deep Space Pad', emocion: 'Oscuro' } }]
-    },
-    {
-      id: 'seg-3',
-      orden: 3,
-      nombre: 'El Silencio',
-      tipo: 'Resolución',
-      intencion_emocional: 'Paz absoluta',
-      ambient_usages: []
-    }
-  ]
+  // 2. Fetch Segments with Ambient Usages
+  const { data: segments } = await supabase
+    .from('segments')
+    .select('*, ambient_usages(*, ambient_layers(*))')
+    .eq('episode_id', id)
+    .order('orden', { ascending: true })
 
-  const layers = [
-    { id: '1', nombre: 'Deep Space Pad', emocion: 'Oscuro', tipo: 'Pad', energia: 3 },
-    { id: '2', nombre: 'Ethereal Light', emocion: 'Luminoso', tipo: 'Drone', energia: 2 }
-  ]
+  // 3. Fetch All Available Layers (for the modal)
+  const { data: layers } = await supabase
+    .from('ambient_layers')
+    .select('*')
+    .order('nombre', { ascending: true })
 
   return (
     <div className="p-8 lg:p-12 animate-in fade-in duration-500">
       <NarrativeEditor 
         episode={episode} 
-        initialSegments={segments as any} 
-        layers={layers}
+        initialSegments={segments || []} 
+        layers={layers || []}
       />
     </div>
   )

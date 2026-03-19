@@ -19,3 +19,18 @@ Limítate a construir las pantallas mínimas:
 4. Editor narrativo por bloques [13].
 5. Vista de grabación ("modo cabina") [11].
 6. Módulo de Publicación y panel editorial (Pipeline Kanban) [11].
+## 4. Categorización Sónica (Sonic Folders)
+Para mantener la coherencia del Agente y la limpieza del catálogo, los efectos (SFX) deben clasificarse en 4 carpetas lógicas:
+- **IMPACTOS:** Glitches, stings, golpes secos, acentos.
+- **TRANSICIONES:** Swishes, risers, caídas, barras sonoras.
+- **ATMOSFERAS:** Fondos específicos (tráfico, lluvia, café, ruido estático) que no sean loops rítmicos.
+- **MECÁNICOS:** Sonidos de foley, clics, teclados, interfaces.
+- **RELIGIOSO:** Cantos gregorianos, campanas, confesiones, rezos, ambientes de iglesia/catedral.
+
+## 5. Moods de Prisma
+Tanto Drones como SFX deben etiquetarse con uno de los 5 Moods oficiales:
+- 🖤 **Oscuro**: Tensión, misterio, tristeza profunda.
+- 🌫️ **Neutro**: Calma, objetividad, transición limpia.
+- ✨ **Luminoso**: Esperanza, claridad, epifanía.
+- ⚡ **Tenso**: Ansiedad, urgencia, conflicto.
+- 🫀 **Vulnerable**: Intimidad, confesión, empatía.

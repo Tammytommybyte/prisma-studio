@@ -74,9 +74,20 @@ CREATE TABLE ambient_usages (
   UNIQUE (segment_id, ambient_layer_id)
 );
 
+CREATE TABLE sound_usages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  segment_id UUID REFERENCES segments(id) ON DELETE CASCADE NOT NULL,
+  sound_asset_id UUID REFERENCES sound_assets(id) ON DELETE CASCADE NOT NULL,
+  volumen INTEGER DEFAULT 80, -- SFX suelen ser más fuertes que el drone
+  trigger_label TEXT, -- Etiqueta para el Pad (ej. "Glitch", "Poesia")
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE (segment_id, sound_asset_id)
+);
+
 -- Habilitar Row Level Security e id de user en un futuro cuando completemos policies
 ALTER TABLE episodes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE segments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sound_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ambient_layers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ambient_usages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sound_usages ENABLE ROW LEVEL SECURITY;
